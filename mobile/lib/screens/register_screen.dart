@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:workspace_tracker/providers/auth_provider.dart';
+import 'package:workspace_tracker/utils/ui_helpers.dart';
 
+/// Screen allowing new users to create an account.
 class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({Key? key}) : super(key: key);
+  const RegisterScreen({super.key});
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
@@ -25,15 +27,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
-  void _handleRegister() async {
+  Future<void> _handleRegister() async {
     if (!_formKey.currentState!.validate()) return;
 
     if (_passwordController.text != _confirmPasswordController.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Passwords do not match'),
-          backgroundColor: Colors.red.shade400,
-        ),
+      showAppSnackBar(
+        context,
+        message: 'Passwords do not match',
+        color: AppColors.error,
       );
       return;
     }
@@ -45,41 +46,38 @@ class _RegisterScreenState extends State<RegisterScreen> {
       password: _passwordController.text,
     );
 
-    if (mounted) {
-      if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Registration successful! Logging you in...'),
-            backgroundColor: Colors.green.shade400,
-          ),
-        );
-        Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(authProvider.errorMessage ?? 'Registration failed'),
-            backgroundColor: Colors.red.shade400,
-          ),
-        );
-      }
+    if (!mounted) return;
+    if (success) {
+      showAppSnackBar(
+        context,
+        message: 'Registration successful! Logging you in...',
+        color: AppColors.success,
+      );
+      Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
+    } else {
+      showAppSnackBar(
+        context,
+        message: authProvider.errorMessage ?? 'Registration failed',
+        color: AppColors.error,
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF030712),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF030712),
+        backgroundColor: AppColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFFf1f5f9)),
+          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           'Create Account',
           style: TextStyle(
-            color: Color(0xFFf1f5f9),
+            color: AppColors.textPrimary,
             fontSize: 18,
             fontWeight: FontWeight.w600,
           ),
@@ -93,7 +91,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const Text(
                 'Create an account to start tracking your projects',
                 style: TextStyle(
-                  color: Color(0xFF94a3b8),
+                  color: AppColors.textSecondary,
                   fontSize: 14,
                 ),
                 textAlign: TextAlign.center,
@@ -109,38 +107,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     // Username Field
                     TextFormField(
                       controller: _usernameController,
-                      decoration: InputDecoration(
+                      decoration: buildInputDecoration(
                         labelText: 'Username',
-                        labelStyle: const TextStyle(
-                          color: Color(0xFF94a3b8),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
                         hintText: 'Choose a username',
-                        hintStyle: const TextStyle(color: Color(0xFF475569)),
-                        filled: true,
-                        fillColor: const Color(0xFF0f1422),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFF1e293b)),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFF1e293b)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(
-                            color: Colors.indigo.shade400,
-                            width: 2,
-                          ),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
                       ),
-                      style: const TextStyle(color: Color(0xFFf1f5f9)),
+                      style: const TextStyle(color: AppColors.textPrimary),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Username is required';
@@ -157,38 +128,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     TextFormField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
-                      decoration: InputDecoration(
+                      decoration: buildInputDecoration(
                         labelText: 'Email Address',
-                        labelStyle: const TextStyle(
-                          color: Color(0xFF94a3b8),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
                         hintText: 'name@example.com',
-                        hintStyle: const TextStyle(color: Color(0xFF475569)),
-                        filled: true,
-                        fillColor: const Color(0xFF0f1422),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFF1e293b)),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFF1e293b)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(
-                            color: Colors.indigo.shade400,
-                            width: 2,
-                          ),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
                       ),
-                      style: const TextStyle(color: Color(0xFFf1f5f9)),
+                      style: const TextStyle(color: AppColors.textPrimary),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Email is required';
@@ -205,38 +149,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     TextFormField(
                       controller: _passwordController,
                       obscureText: true,
-                      decoration: InputDecoration(
+                      decoration: buildInputDecoration(
                         labelText: 'Password',
-                        labelStyle: const TextStyle(
-                          color: Color(0xFF94a3b8),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
                         hintText: '••••••••',
-                        hintStyle: const TextStyle(color: Color(0xFF475569)),
-                        filled: true,
-                        fillColor: const Color(0xFF0f1422),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFF1e293b)),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFF1e293b)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(
-                            color: Colors.indigo.shade400,
-                            width: 2,
-                          ),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
                       ),
-                      style: const TextStyle(color: Color(0xFFf1f5f9)),
+                      style: const TextStyle(color: AppColors.textPrimary),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Password is required';
@@ -253,38 +170,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     TextFormField(
                       controller: _confirmPasswordController,
                       obscureText: true,
-                      decoration: InputDecoration(
+                      decoration: buildInputDecoration(
                         labelText: 'Confirm Password',
-                        labelStyle: const TextStyle(
-                          color: Color(0xFF94a3b8),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
                         hintText: '••••••••',
-                        hintStyle: const TextStyle(color: Color(0xFF475569)),
-                        filled: true,
-                        fillColor: const Color(0xFF0f1422),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFF1e293b)),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFF1e293b)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(
-                            color: Colors.indigo.shade400,
-                            width: 2,
-                          ),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
                       ),
-                      style: const TextStyle(color: Color(0xFFf1f5f9)),
+                      style: const TextStyle(color: AppColors.textPrimary),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Please confirm your password';
@@ -299,7 +189,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       builder: (context, authProvider, _) => SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: authProvider.isLoading ? null : _handleRegister,
+                          onPressed:
+                              authProvider.isLoading ? null : _handleRegister,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.indigo.shade600,
                             foregroundColor: Colors.white,
@@ -314,7 +205,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   height: 20,
                                   width: 20,
                                   child: CircularProgressIndicator(
-                                    valueColor: AlwaysStoppedAnimation(Colors.white),
+                                    valueColor: AlwaysStoppedAnimation(
+                                      Colors.white,
+                                    ),
                                     strokeWidth: 2,
                                   ),
                                 )
@@ -341,7 +234,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const Text(
                     'Already have an account? ',
                     style: TextStyle(
-                      color: Color(0xFF94a3b8),
+                      color: AppColors.textSecondary,
                       fontSize: 14,
                     ),
                   ),

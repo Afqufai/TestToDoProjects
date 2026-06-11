@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:workspace_tracker/providers/auth_provider.dart';
 import 'package:workspace_tracker/providers/project_provider.dart';
+import 'package:workspace_tracker/utils/ui_helpers.dart';
 
+/// Screen displaying all projects for the authenticated user.
 class ProjectListScreen extends StatefulWidget {
-  const ProjectListScreen({Key? key}) : super(key: key);
+  const ProjectListScreen({super.key});
 
   @override
   State<ProjectListScreen> createState() => _ProjectListScreenState();
@@ -26,51 +28,25 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF0f172a),
+        backgroundColor: AppColors.surface,
         title: const Text(
           'Create New Project',
-          style: TextStyle(color: Color(0xFFf1f5f9)),
+          style: TextStyle(color: AppColors.textPrimary),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: nameController,
-              decoration: InputDecoration(
-                labelText: 'Project Name',
-                labelStyle: const TextStyle(color: Color(0xFF94a3b8)),
-                filled: true,
-                fillColor: const Color(0xFF0f1422),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Color(0xFF1e293b)),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Color(0xFF1e293b)),
-                ),
-              ),
-              style: const TextStyle(color: Color(0xFFf1f5f9)),
+              decoration: buildInputDecoration(labelText: 'Project Name'),
+              style: const TextStyle(color: AppColors.textPrimary),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: descController,
               maxLines: 3,
-              decoration: InputDecoration(
-                labelText: 'Description',
-                labelStyle: const TextStyle(color: Color(0xFF94a3b8)),
-                filled: true,
-                fillColor: const Color(0xFF0f1422),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Color(0xFF1e293b)),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Color(0xFF1e293b)),
-                ),
-              ),
-              style: const TextStyle(color: Color(0xFFf1f5f9)),
+              decoration: buildInputDecoration(labelText: 'Description'),
+              style: const TextStyle(color: AppColors.textPrimary),
             ),
           ],
         ),
@@ -79,17 +55,16 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
             onPressed: () => Navigator.pop(context),
             child: const Text(
               'Cancel',
-              style: TextStyle(color: Color(0xFF94a3b8)),
+              style: TextStyle(color: AppColors.textSecondary),
             ),
           ),
           TextButton(
             onPressed: () async {
               if (nameController.text.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: const Text('Project name is required'),
-                    backgroundColor: Colors.red.shade400,
-                  ),
+                showAppSnackBar(
+                  context,
+                  message: 'Project name is required',
+                  color: AppColors.error,
                 );
                 return;
               }
@@ -100,23 +75,20 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
                 description: descController.text,
               );
 
-              if (mounted) {
-                Navigator.pop(context);
-                if (success) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text('Project created successfully'),
-                      backgroundColor: Colors.green.shade400,
-                    ),
-                  );
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(projectProvider.errorMessage ?? 'Failed to create project'),
-                      backgroundColor: Colors.red.shade400,
-                    ),
-                  );
-                }
+              if (!context.mounted) return;
+              Navigator.pop(context);
+              if (success) {
+                showAppSnackBar(
+                  context,
+                  message: 'Project created successfully',
+                  color: AppColors.success,
+                );
+              } else {
+                showAppSnackBar(
+                  context,
+                  message: projectProvider.errorMessage ?? 'Failed to create project',
+                  color: AppColors.error,
+                );
               }
             },
             child: const Text(
@@ -132,14 +104,14 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF030712),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF030712),
+        backgroundColor: AppColors.background,
         elevation: 0,
         title: const Text(
           'Your Projects',
           style: TextStyle(
-            color: Color(0xFFf1f5f9),
+            color: AppColors.textPrimary,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
@@ -152,15 +124,14 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
                 builder: (context, authProvider, _) => GestureDetector(
                   onTap: () async {
                     await authProvider.logout();
-                    if (mounted) {
-                      Navigator.of(context)
-                          .pushNamedAndRemoveUntil('/login', (route) => false);
-                    }
+                    if (!context.mounted) return;
+                    Navigator.of(context)
+                        .pushNamedAndRemoveUntil('/login', (route) => false);
                   },
                   child: const Text(
                     'Logout',
                     style: TextStyle(
-                      color: Color(0xFF94a3b8),
+                      color: AppColors.textSecondary,
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
@@ -194,13 +165,13 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
                   Icon(
                     Icons.folder_open,
                     size: 48,
-                    color: Colors.indigo.shade400.withOpacity(0.5),
+                    color: Colors.indigo.shade400.withValues(alpha: 0.5),
                   ),
                   const SizedBox(height: 16),
                   const Text(
                     'No Projects Yet',
                     style: TextStyle(
-                      color: Color(0xFFf1f5f9),
+                      color: AppColors.textPrimary,
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
                     ),
@@ -209,7 +180,7 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
                   const Text(
                     'Create your first project to get started',
                     style: TextStyle(
-                      color: Color(0xFF94a3b8),
+                      color: AppColors.textSecondary,
                       fontSize: 14,
                     ),
                   ),
@@ -241,11 +212,11 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
                   );
                 },
                 child: Card(
-                  color: const Color(0xFF0f172a),
+                  color: AppColors.surface,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
-                    side: const BorderSide(color: Color(0xFF1e293b)),
+                    side: const BorderSide(color: AppColors.border),
                   ),
                   margin: const EdgeInsets.only(bottom: 12),
                   child: Padding(
@@ -256,7 +227,7 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
                         Text(
                           project.name,
                           style: const TextStyle(
-                            color: Color(0xFFf1f5f9),
+                            color: AppColors.textPrimary,
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
@@ -267,7 +238,7 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
                               ? 'No description'
                               : project.description,
                           style: const TextStyle(
-                            color: Color(0xFF94a3b8),
+                            color: AppColors.textSecondary,
                             fontSize: 13,
                           ),
                           maxLines: 2,
@@ -277,7 +248,7 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
                         Text(
                           'Created ${project.createdAt.toString().split(' ')[0]}',
                           style: const TextStyle(
-                            color: Color(0xFF64748b),
+                            color: AppColors.textTertiary,
                             fontSize: 12,
                           ),
                         ),
