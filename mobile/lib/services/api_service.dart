@@ -26,6 +26,9 @@ class ApiService {
         baseUrl: _baseUrl,
         contentType: Headers.jsonContentType,
         responseType: ResponseType.json,
+        // Prevent Dio from throwing DioException for HTTP errors (like 401, 404).
+        // This avoids Flutter Web Unhandled Promise Rejections and lets us parse the body manually.
+        validateStatus: (status) => true,
       ),
     );
 
@@ -41,12 +44,16 @@ class ApiService {
 
           return handler.next(options);
         },
-        onError: (error, handler) async {
-          if (error.response?.statusCode == 401) {
+        onResponse: (response, handler) async {
+          if (response.statusCode == 401) {
             final prefs = await SharedPreferences.getInstance();
             await prefs.remove(keyToken);
             await prefs.remove(keyUserData);
           }
+          return handler.next(response);
+        },
+        onError: (error, handler) async {
+          // This will now only catch actual network errors (e.g. timeouts, offline), not HTTP status codes.
           return handler.next(error);
         },
       ),
@@ -58,10 +65,6 @@ class ApiService {
   // ---------------------------------------------------------------------------
 
   /// Registers a new user account.
-  ///
-  /// Returns the raw [AuthResponse] — note the backend returns a success
-  /// message (not a token) for registration, so the caller should handle
-  /// this accordingly.
   Future<AuthResponse> register({
     required String username,
     required String email,
@@ -76,9 +79,9 @@ class ApiService {
       if (response.statusCode == 200) {
         return AuthResponse.fromJson(response.data as Map<String, dynamic>);
       }
-      throw Exception('Registration failed: ${_extractMessage(response.data)}');
+      throw Exception(_extractMessage(response.data) ?? 'Registration failed.');
     } on DioException catch (e) {
-      throw Exception(_getErrorMessage(e));
+      throw Exception(_getNetworkErrorMessage(e));
     }
   }
 
@@ -106,9 +109,9 @@ class ApiService {
 
         return authResponse;
       }
-      throw Exception('Login failed: ${_extractMessage(response.data)}');
+      throw Exception(_extractMessage(response.data) ?? 'Login failed. Invalid credentials or server error.');
     } on DioException catch (e) {
-      throw Exception(_getErrorMessage(e));
+      throw Exception(_getNetworkErrorMessage(e));
     }
   }
 
@@ -127,9 +130,9 @@ class ApiService {
             .map((item) => Project.fromJson(item as Map<String, dynamic>))
             .toList();
       }
-      throw Exception('Failed to fetch projects.');
+      throw Exception(_extractMessage(response.data) ?? 'Failed to fetch projects.');
     } on DioException catch (e) {
-      throw Exception(_getErrorMessage(e));
+      throw Exception(_getNetworkErrorMessage(e));
     }
   }
 
@@ -141,9 +144,9 @@ class ApiService {
       if (response.statusCode == 200) {
         return Project.fromJson(response.data as Map<String, dynamic>);
       }
-      throw Exception('Failed to fetch project.');
+      throw Exception(_extractMessage(response.data) ?? 'Failed to fetch project.');
     } on DioException catch (e) {
-      throw Exception(_getErrorMessage(e));
+      throw Exception(_getNetworkErrorMessage(e));
     }
   }
 
@@ -161,9 +164,9 @@ class ApiService {
       if (response.statusCode == 201 || response.statusCode == 200) {
         return Project.fromJson(response.data as Map<String, dynamic>);
       }
-      throw Exception('Failed to create project.');
+      throw Exception(_extractMessage(response.data) ?? 'Failed to create project.');
     } on DioException catch (e) {
-      throw Exception(_getErrorMessage(e));
+      throw Exception(_getNetworkErrorMessage(e));
     }
   }
 
@@ -180,10 +183,10 @@ class ApiService {
       );
 
       if (response.statusCode != 204 && response.statusCode != 200) {
-        throw Exception('Failed to update project.');
+        throw Exception(_extractMessage(response.data) ?? 'Failed to update project.');
       }
     } on DioException catch (e) {
-      throw Exception(_getErrorMessage(e));
+      throw Exception(_getNetworkErrorMessage(e));
     }
   }
 
@@ -193,10 +196,10 @@ class ApiService {
       final response = await _dio.delete('/api/projects/$id');
 
       if (response.statusCode != 204 && response.statusCode != 200) {
-        throw Exception('Failed to delete project.');
+        throw Exception(_extractMessage(response.data) ?? 'Failed to delete project.');
       }
     } on DioException catch (e) {
-      throw Exception(_getErrorMessage(e));
+      throw Exception(_getNetworkErrorMessage(e));
     }
   }
 
@@ -215,9 +218,9 @@ class ApiService {
             .map((item) => TaskItem.fromJson(item as Map<String, dynamic>))
             .toList();
       }
-      throw Exception('Failed to fetch tasks.');
+      throw Exception(_extractMessage(response.data) ?? 'Failed to fetch tasks.');
     } on DioException catch (e) {
-      throw Exception(_getErrorMessage(e));
+      throw Exception(_getNetworkErrorMessage(e));
     }
   }
 
@@ -229,9 +232,9 @@ class ApiService {
       if (response.statusCode == 200) {
         return TaskItem.fromJson(response.data as Map<String, dynamic>);
       }
-      throw Exception('Failed to fetch task.');
+      throw Exception(_extractMessage(response.data) ?? 'Failed to fetch task.');
     } on DioException catch (e) {
-      throw Exception(_getErrorMessage(e));
+      throw Exception(_getNetworkErrorMessage(e));
     }
   }
 
@@ -256,9 +259,9 @@ class ApiService {
       if (response.statusCode == 201 || response.statusCode == 200) {
         return TaskItem.fromJson(response.data as Map<String, dynamic>);
       }
-      throw Exception('Failed to create task.');
+      throw Exception(_extractMessage(response.data) ?? 'Failed to create task.');
     } on DioException catch (e) {
-      throw Exception(_getErrorMessage(e));
+      throw Exception(_getNetworkErrorMessage(e));
     }
   }
 
@@ -282,10 +285,10 @@ class ApiService {
       );
 
       if (response.statusCode != 204 && response.statusCode != 200) {
-        throw Exception('Failed to update task.');
+        throw Exception(_extractMessage(response.data) ?? 'Failed to update task.');
       }
     } on DioException catch (e) {
-      throw Exception(_getErrorMessage(e));
+      throw Exception(_getNetworkErrorMessage(e));
     }
   }
 
@@ -295,10 +298,10 @@ class ApiService {
       final response = await _dio.delete('/api/tasks/$id');
 
       if (response.statusCode != 204 && response.statusCode != 200) {
-        throw Exception('Failed to delete task.');
+        throw Exception(_extractMessage(response.data) ?? 'Failed to delete task.');
       }
     } on DioException catch (e) {
-      throw Exception(_getErrorMessage(e));
+      throw Exception(_getNetworkErrorMessage(e));
     }
   }
 
@@ -306,13 +309,13 @@ class ApiService {
   // Helpers
   // ---------------------------------------------------------------------------
 
-  /// Extracts a human-readable error message from a [DioException].
-  ///
-  /// Checks the `detail`, `message`, and `title` fields of the response body
-  /// in order of priority, falling back to the Dio error message.
-  String _getErrorMessage(DioException error) {
-    final message = _extractMessage(error.response?.data);
-    return message ?? error.message ?? 'An unexpected error occurred.';
+  /// Extracts a human-readable network error message from a [DioException].
+  String _getNetworkErrorMessage(DioException error) {
+    if (error.type == DioExceptionType.connectionTimeout || 
+        error.type == DioExceptionType.receiveTimeout) {
+      return 'Connection timed out. Please check your internet.';
+    }
+    return error.message ?? 'A network error occurred.';
   }
 
   /// Attempts to pull a message string from a generic API response body.
@@ -321,6 +324,8 @@ class ApiService {
       return data['detail'] as String? ??
           data['message'] as String? ??
           data['title'] as String?;
+    } else if (data is String && data.isNotEmpty) {
+      return data;
     }
     return null;
   }

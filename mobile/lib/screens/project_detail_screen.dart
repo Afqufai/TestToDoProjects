@@ -3,12 +3,13 @@ import 'package:provider/provider.dart';
 import 'package:workspace_tracker/models/task_model.dart';
 import 'package:workspace_tracker/providers/project_provider.dart';
 import 'package:workspace_tracker/providers/task_provider.dart';
+import 'package:workspace_tracker/utils/ui_helpers.dart';
 
+/// Screen displaying the details of a project and its tasks.
 class ProjectDetailScreen extends StatefulWidget {
   final String projectId;
 
-  const ProjectDetailScreen({Key? key, required this.projectId})
-      : super(key: key);
+  const ProjectDetailScreen({super.key, required this.projectId});
 
   @override
   State<ProjectDetailScreen> createState() => _ProjectDetailScreenState();
@@ -31,43 +32,25 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF0f172a),
+        backgroundColor: AppColors.surface,
         title: const Text(
           'Add New Task',
-          style: TextStyle(color: Color(0xFFf1f5f9)),
+          style: TextStyle(color: AppColors.textPrimary),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: titleController,
-              decoration: InputDecoration(
-                labelText: 'Task Title',
-                labelStyle: const TextStyle(color: Color(0xFF94a3b8)),
-                filled: true,
-                fillColor: const Color(0xFF0f1422),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Color(0xFF1e293b)),
-                ),
-              ),
-              style: const TextStyle(color: Color(0xFFf1f5f9)),
+              decoration: buildInputDecoration(labelText: 'Task Title'),
+              style: const TextStyle(color: AppColors.textPrimary),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: descController,
               maxLines: 3,
-              decoration: InputDecoration(
-                labelText: 'Description',
-                labelStyle: const TextStyle(color: Color(0xFF94a3b8)),
-                filled: true,
-                fillColor: const Color(0xFF0f1422),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Color(0xFF1e293b)),
-                ),
-              ),
-              style: const TextStyle(color: Color(0xFFf1f5f9)),
+              decoration: buildInputDecoration(labelText: 'Description'),
+              style: const TextStyle(color: AppColors.textPrimary),
             ),
           ],
         ),
@@ -76,17 +59,16 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
             onPressed: () => Navigator.pop(context),
             child: const Text(
               'Cancel',
-              style: TextStyle(color: Color(0xFF94a3b8)),
+              style: TextStyle(color: AppColors.textSecondary),
             ),
           ),
           TextButton(
             onPressed: () async {
               if (titleController.text.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: const Text('Task title is required'),
-                    backgroundColor: Colors.red.shade400,
-                  ),
+                showAppSnackBar(
+                  context,
+                  message: 'Task title is required',
+                  color: AppColors.error,
                 );
                 return;
               }
@@ -98,23 +80,20 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                 projectId: widget.projectId,
               );
 
-              if (mounted) {
-                Navigator.pop(context);
-                if (success) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text('Task created successfully'),
-                      backgroundColor: Colors.green.shade400,
-                    ),
-                  );
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(taskProvider.errorMessage ?? 'Failed to create task'),
-                      backgroundColor: Colors.red.shade400,
-                    ),
-                  );
-                }
+              if (!context.mounted) return;
+              Navigator.pop(context);
+              if (success) {
+                showAppSnackBar(
+                  context,
+                  message: 'Task created successfully',
+                  color: AppColors.success,
+                );
+              } else {
+                showAppSnackBar(
+                  context,
+                  message: taskProvider.errorMessage ?? 'Failed to create task',
+                  color: AppColors.error,
+                );
               }
             },
             child: const Text(
@@ -136,10 +115,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          backgroundColor: const Color(0xFF0f172a),
+          backgroundColor: AppColors.surface,
           title: const Text(
             'Task Details',
-            style: TextStyle(color: Color(0xFFf1f5f9)),
+            style: TextStyle(color: AppColors.textPrimary),
           ),
           content: SingleChildScrollView(
             child: Column(
@@ -148,38 +127,30 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
               children: [
                 TextField(
                   controller: titleController,
-                  decoration: InputDecoration(
-                    labelText: 'Task Title',
-                    labelStyle: const TextStyle(color: Color(0xFF94a3b8)),
-                    filled: true,
-                    fillColor: const Color(0xFF0f1422),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: Color(0xFF1e293b)),
-                    ),
-                  ),
-                  style: const TextStyle(color: Color(0xFFf1f5f9)),
+                  decoration: buildInputDecoration(labelText: 'Task Title'),
+                  style: const TextStyle(color: AppColors.textPrimary),
                 ),
                 const SizedBox(height: 12),
                 const Text(
                   'Status',
                   style: TextStyle(
-                    color: Color(0xFF94a3b8),
+                    color: AppColors.textSecondary,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 8),
-                DropdownButton<TaskStatus>(
-                  value: selectedStatus,
+                DropdownButtonFormField<TaskStatus>(
+                  initialValue: selectedStatus,
                   isExpanded: true,
-                  dropdownColor: const Color(0xFF0f1422),
+                  dropdownColor: AppColors.inputFill,
+                  decoration: buildInputDecoration(labelText: 'Current Status'),
                   items: TaskStatus.values.map((status) {
                     return DropdownMenuItem(
                       value: status,
                       child: Text(
                         status.value,
-                        style: const TextStyle(color: Color(0xFFf1f5f9)),
+                        style: const TextStyle(color: AppColors.textPrimary),
                       ),
                     );
                   }).toList(),
@@ -193,17 +164,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                 TextField(
                   controller: descController,
                   maxLines: 3,
-                  decoration: InputDecoration(
-                    labelText: 'Description',
-                    labelStyle: const TextStyle(color: Color(0xFF94a3b8)),
-                    filled: true,
-                    fillColor: const Color(0xFF0f1422),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: Color(0xFF1e293b)),
-                    ),
-                  ),
-                  style: const TextStyle(color: Color(0xFFf1f5f9)),
+                  decoration: buildInputDecoration(labelText: 'Description'),
+                  style: const TextStyle(color: AppColors.textPrimary),
                 ),
               ],
             ),
@@ -214,35 +176,32 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                 final taskProvider = context.read<TaskProvider>();
                 final success = await taskProvider.deleteTask(task.id);
 
-                if (mounted) {
-                  Navigator.pop(context);
-                  if (success) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Text('Task deleted successfully'),
-                        backgroundColor: Colors.green.shade400,
-                      ),
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(taskProvider.errorMessage ?? 'Failed to delete task'),
-                        backgroundColor: Colors.red.shade400,
-                      ),
-                    );
-                  }
+                if (!context.mounted) return;
+                Navigator.pop(context);
+                if (success) {
+                  showAppSnackBar(
+                    context,
+                    message: 'Task deleted successfully',
+                    color: AppColors.success,
+                  );
+                } else {
+                  showAppSnackBar(
+                    context,
+                    message: taskProvider.errorMessage ?? 'Failed to delete task',
+                    color: AppColors.error,
+                  );
                 }
               },
               child: const Text(
                 'Delete',
-                style: TextStyle(color: Colors.red),
+                style: TextStyle(color: AppColors.error),
               ),
             ),
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: const Text(
                 'Cancel',
-                style: TextStyle(color: Color(0xFF94a3b8)),
+                style: TextStyle(color: AppColors.textSecondary),
               ),
             ),
             TextButton(
@@ -256,23 +215,20 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                   projectId: widget.projectId,
                 );
 
-                if (mounted) {
-                  Navigator.pop(context);
-                  if (success) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Text('Task updated successfully'),
-                        backgroundColor: Colors.green.shade400,
-                      ),
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(taskProvider.errorMessage ?? 'Failed to update task'),
-                        backgroundColor: Colors.red.shade400,
-                      ),
-                    );
-                  }
+                if (!context.mounted) return;
+                Navigator.pop(context);
+                if (success) {
+                  showAppSnackBar(
+                    context,
+                    message: 'Task updated successfully',
+                    color: AppColors.success,
+                  );
+                } else {
+                  showAppSnackBar(
+                    context,
+                    message: taskProvider.errorMessage ?? 'Failed to update task',
+                    color: AppColors.error,
+                  );
                 }
               },
               child: const Text(
@@ -289,12 +245,12 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF030712),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF030712),
+        backgroundColor: AppColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFFf1f5f9)),
+          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Consumer<ProjectProvider>(
@@ -303,7 +259,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
             return Text(
               project?.name ?? 'Project Details',
               style: const TextStyle(
-                color: Color(0xFFf1f5f9),
+                color: AppColors.textPrimary,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
@@ -331,7 +287,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
             return const Center(
               child: Text(
                 'Project not found',
-                style: TextStyle(color: Color(0xFF94a3b8)),
+                style: TextStyle(color: AppColors.textSecondary),
               ),
             );
           }
@@ -343,11 +299,11 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
               children: [
                 // Project Info
                 Card(
-                  color: const Color(0xFF0f172a),
+                  color: AppColors.surface,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
-                    side: const BorderSide(color: Color(0xFF1e293b)),
+                    side: const BorderSide(color: AppColors.border),
                   ),
                   child: Padding(
                     padding: const EdgeInsets.all(16),
@@ -357,7 +313,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                         Text(
                           project.name,
                           style: const TextStyle(
-                            color: Color(0xFFf1f5f9),
+                            color: AppColors.textPrimary,
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                           ),
@@ -368,7 +324,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                               ? 'No description provided'
                               : project.description,
                           style: const TextStyle(
-                            color: Color(0xFF94a3b8),
+                            color: AppColors.textSecondary,
                             fontSize: 14,
                           ),
                         ),
@@ -383,7 +339,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                 const Text(
                   'Tasks',
                   style: TextStyle(
-                    color: Color(0xFFf1f5f9),
+                    color: AppColors.textPrimary,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
@@ -400,13 +356,13 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                           Icon(
                             Icons.task_alt,
                             size: 48,
-                            color: Colors.indigo.shade400.withOpacity(0.5),
+                            color: Colors.indigo.shade400.withValues(alpha: 0.5),
                           ),
                           const SizedBox(height: 16),
                           const Text(
                             'No Tasks Yet',
                             style: TextStyle(
-                              color: Color(0xFFf1f5f9),
+                              color: AppColors.textPrimary,
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
                             ),
@@ -415,7 +371,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                           const Text(
                             'Add a task to get started',
                             style: TextStyle(
-                              color: Color(0xFF94a3b8),
+                              color: AppColors.textSecondary,
                               fontSize: 13,
                             ),
                           ),
@@ -439,11 +395,11 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                       return GestureDetector(
                         onTap: () => _showTaskDetailsDialog(context, task),
                         child: Card(
-                          color: const Color(0xFF0f172a),
+                          color: AppColors.surface,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
-                            side: const BorderSide(color: Color(0xFF1e293b)),
+                            side: const BorderSide(color: AppColors.border),
                           ),
                           margin: const EdgeInsets.only(bottom: 12),
                           child: Padding(
@@ -457,7 +413,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                                       child: Text(
                                         task.title,
                                         style: const TextStyle(
-                                          color: Color(0xFFf1f5f9),
+                                          color: AppColors.textPrimary,
                                           fontSize: 15,
                                           fontWeight: FontWeight.w600,
                                         ),
@@ -469,7 +425,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                                         vertical: 4,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: statusColor.withOpacity(0.2),
+                                        color: statusColor.withValues(alpha: 0.2),
                                         border: Border.all(color: statusColor),
                                         borderRadius: BorderRadius.circular(6),
                                       ),
@@ -489,7 +445,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                                   Text(
                                     task.description,
                                     style: const TextStyle(
-                                      color: Color(0xFF94a3b8),
+                                      color: AppColors.textSecondary,
                                       fontSize: 12,
                                     ),
                                     maxLines: 2,
@@ -500,7 +456,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                                 Text(
                                   'Created ${task.createdAt.toString().split(' ')[0]}',
                                   style: const TextStyle(
-                                    color: Color(0xFF64748b),
+                                    color: AppColors.textTertiary,
                                     fontSize: 11,
                                   ),
                                 ),
