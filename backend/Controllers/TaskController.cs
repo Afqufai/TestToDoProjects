@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WorkspaceTracker.Api.Models.DTOs.Task;
 using WorkspaceTracker.Api.Models.Entities;
+using WorkspaceTracker.Api.Models.Enums;
 using WorkspaceTracker.Api.Repositories.Interfaces;
 using TaskStatus = WorkspaceTracker.Api.Models.Enums.TaskStatus;
 
@@ -68,6 +69,10 @@ public class TaskController : ControllerBase
             Description = dto.Description,
             Status = taskStatus,
             ProjectId = dto.ProjectId,
+            DueDate = dto.DueDate?.ToUniversalTime(),
+            Priority = Enum.TryParse<TaskPriority>(dto.Priority, ignoreCase: true, out var createPriority)
+                ? createPriority : TaskPriority.Medium,
+            AssigneeId = dto.AssigneeId,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -97,6 +102,10 @@ public class TaskController : ControllerBase
         task.Description = dto.Description;
         task.Status = taskStatus;
         task.ProjectId = dto.ProjectId;
+        task.DueDate = dto.DueDate?.ToUniversalTime();
+        task.Priority = Enum.TryParse<TaskPriority>(dto.Priority, ignoreCase: true, out var updatePriority)
+            ? updatePriority : TaskPriority.Medium;
+        task.AssigneeId = dto.AssigneeId;
 
         await _taskRepository.UpdateAsync(task);
 
@@ -124,6 +133,9 @@ public class TaskController : ControllerBase
         Title = task.Title,
         Description = task.Description,
         Status = task.Status.ToString(),
+        DueDate = task.DueDate,
+        Priority = task.Priority.ToString(),
+        AssigneeId = task.AssigneeId,
         ProjectId = task.ProjectId,
         CreatedAt = task.CreatedAt
     };

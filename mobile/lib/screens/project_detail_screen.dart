@@ -29,81 +29,134 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   void _showAddTaskDialog(BuildContext context) {
     final titleController = TextEditingController();
     final descController = TextEditingController();
+    DateTime? selectedDueDate;
+    TaskPriority selectedPriority = TaskPriority.medium;
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: const Text(
-          'Add New Task',
-          style: TextStyle(color: AppColors.textPrimary),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: titleController,
-              decoration: buildInputDecoration(labelText: 'Task Title'),
-              style: const TextStyle(color: AppColors.textPrimary),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          backgroundColor: AppColors.surface,
+          title: const Text(
+            'Add New Task',
+            style: TextStyle(color: AppColors.textPrimary),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: titleController,
+                  decoration: buildInputDecoration(labelText: 'Task Title'),
+                  style: const TextStyle(color: AppColors.textPrimary),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<TaskPriority>(
+                  initialValue: selectedPriority,
+                  isExpanded: true,
+                  dropdownColor: AppColors.inputFill,
+                  decoration: buildInputDecoration(labelText: 'Priority'),
+                  items: TaskPriority.values.map((p) {
+                    return DropdownMenuItem(
+                      value: p,
+                      child: Text(
+                        p.value,
+                        style: const TextStyle(color: AppColors.textPrimary),
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (val) {
+                    if (val != null) setState(() => selectedPriority = val);
+                  },
+                ),
+                const SizedBox(height: 12),
+                InkWell(
+                  onTap: () async {
+                    final date = await showDatePicker(
+                      context: context,
+                      initialDate: selectedDueDate ?? DateTime.now(),
+                      firstDate: DateTime.now().subtract(const Duration(days: 365)),
+                      lastDate: DateTime.now().add(const Duration(days: 3650)),
+                    );
+                    if (date != null) {
+                      setState(() => selectedDueDate = date);
+                    }
+                  },
+                  child: InputDecorator(
+                    decoration: buildInputDecoration(labelText: 'Due Date'),
+                    child: Text(
+                      selectedDueDate != null
+                          ? selectedDueDate!.toString().split(' ')[0]
+                          : 'Select a Date',
+                      style: TextStyle(
+                        color: selectedDueDate != null ? AppColors.textPrimary : AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: descController,
+                  maxLines: 3,
+                  decoration: buildInputDecoration(labelText: 'Description'),
+                  style: const TextStyle(color: AppColors.textPrimary),
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: descController,
-              maxLines: 3,
-              decoration: buildInputDecoration(labelText: 'Description'),
-              style: const TextStyle(color: AppColors.textPrimary),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
+            ),
+            TextButton(
+              onPressed: () async {
+                if (titleController.text.isEmpty) {
+                  showAppSnackBar(
+                    context,
+                    message: 'Task title is required',
+                    color: AppColors.error,
+                  );
+                  return;
+                }
+
+                final taskProvider = context.read<TaskProvider>();
+                final success = await taskProvider.createTask(
+                  title: titleController.text,
+                  description: descController.text,
+                  projectId: widget.projectId,
+                  dueDate: selectedDueDate,
+                  priority: selectedPriority,
+                );
+
+                if (!context.mounted) return;
+                Navigator.pop(context);
+                if (success) {
+                  context.read<ProjectProvider>().fetchProjectAnalytics(widget.projectId);
+                  showAppSnackBar(
+                    context,
+                    message: 'Task created successfully',
+                    color: AppColors.success,
+                  );
+                } else {
+                  showAppSnackBar(
+                    context,
+                    message: taskProvider.errorMessage ?? 'Failed to create task',
+                    color: AppColors.error,
+                  );
+                }
+              },
+              child: const Text(
+                'Create',
+                style: TextStyle(color: Colors.indigo),
+              ),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(color: AppColors.textSecondary),
-            ),
-          ),
-          TextButton(
-            onPressed: () async {
-              if (titleController.text.isEmpty) {
-                showAppSnackBar(
-                  context,
-                  message: 'Task title is required',
-                  color: AppColors.error,
-                );
-                return;
-              }
-
-              final taskProvider = context.read<TaskProvider>();
-              final success = await taskProvider.createTask(
-                title: titleController.text,
-                description: descController.text,
-                projectId: widget.projectId,
-              );
-
-              if (!context.mounted) return;
-              Navigator.pop(context);
-              if (success) {
-                context.read<ProjectProvider>().fetchProjectAnalytics(widget.projectId);
-                showAppSnackBar(
-                  context,
-                  message: 'Task created successfully',
-                  color: AppColors.success,
-                );
-              } else {
-                showAppSnackBar(
-                  context,
-                  message: taskProvider.errorMessage ?? 'Failed to create task',
-                  color: AppColors.error,
-                );
-              }
-            },
-            child: const Text(
-              'Create',
-              style: TextStyle(color: Colors.indigo),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -112,6 +165,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     final titleController = TextEditingController(text: task.title);
     final descController = TextEditingController(text: task.description);
     var selectedStatus = task.status;
+    DateTime? selectedDueDate = task.dueDate;
+    var selectedPriority = task.priority;
 
     showDialog(
       context: context,
@@ -133,34 +188,77 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                   style: const TextStyle(color: AppColors.textPrimary),
                 ),
                 const SizedBox(height: 12),
-                const Text(
-                  'Status',
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                DropdownButtonFormField<TaskStatus>(
-                  initialValue: selectedStatus,
-                  isExpanded: true,
-                  dropdownColor: AppColors.inputFill,
-                  decoration: buildInputDecoration(labelText: 'Current Status'),
-                  items: TaskStatus.values.map((status) {
-                    return DropdownMenuItem(
-                      value: status,
-                      child: Text(
-                        status.value,
-                        style: const TextStyle(color: AppColors.textPrimary),
+                Row(
+                  children: [
+                    Expanded(
+                      child: DropdownButtonFormField<TaskStatus>(
+                        initialValue: selectedStatus,
+                        isExpanded: true,
+                        dropdownColor: AppColors.inputFill,
+                        decoration: buildInputDecoration(labelText: 'Status'),
+                        items: TaskStatus.values.map((status) {
+                          return DropdownMenuItem(
+                            value: status,
+                            child: Text(
+                              status.value,
+                              style: const TextStyle(color: AppColors.textPrimary),
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (newStatus) {
+                          setState(() {
+                            selectedStatus = newStatus!;
+                          });
+                        },
                       ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: DropdownButtonFormField<TaskPriority>(
+                        initialValue: selectedPriority,
+                        isExpanded: true,
+                        dropdownColor: AppColors.inputFill,
+                        decoration: buildInputDecoration(labelText: 'Priority'),
+                        items: TaskPriority.values.map((p) {
+                          return DropdownMenuItem(
+                            value: p,
+                            child: Text(
+                              p.value,
+                              style: const TextStyle(color: AppColors.textPrimary),
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (val) {
+                          if (val != null) setState(() => selectedPriority = val);
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                InkWell(
+                  onTap: () async {
+                    final date = await showDatePicker(
+                      context: context,
+                      initialDate: selectedDueDate ?? DateTime.now(),
+                      firstDate: DateTime.now().subtract(const Duration(days: 365)),
+                      lastDate: DateTime.now().add(const Duration(days: 3650)),
                     );
-                  }).toList(),
-                  onChanged: (newStatus) {
-                    setState(() {
-                      selectedStatus = newStatus!;
-                    });
+                    if (date != null) {
+                      setState(() => selectedDueDate = date);
+                    }
                   },
+                  child: InputDecorator(
+                    decoration: buildInputDecoration(labelText: 'Due Date'),
+                    child: Text(
+                      selectedDueDate != null
+                          ? selectedDueDate!.toString().split(' ')[0]
+                          : 'Select a Date',
+                      style: TextStyle(
+                        color: selectedDueDate != null ? AppColors.textPrimary : AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
@@ -216,6 +314,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                   description: descController.text,
                   status: selectedStatus,
                   projectId: widget.projectId,
+                  dueDate: selectedDueDate,
+                  priority: selectedPriority,
                 );
 
                 if (!context.mounted) return;
@@ -401,14 +501,23 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                               ? Colors.blue.shade400
                               : Colors.green.shade400;
 
+                      final isOverdue = task.dueDate != null && 
+                                        task.dueDate!.isBefore(DateTime.now()) && 
+                                        task.status != TaskStatus.done;
+                      final priorityColor = task.priority == TaskPriority.high 
+                          ? Colors.red 
+                          : task.priority == TaskPriority.medium 
+                              ? Colors.orange 
+                              : Colors.green;
+
                       return GestureDetector(
                         onTap: () => _showTaskDetailsDialog(context, task),
                         child: Card(
-                          color: AppColors.surface,
+                          color: isOverdue ? Colors.red.withValues(alpha: 0.05) : AppColors.surface,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
-                            side: const BorderSide(color: AppColors.border),
+                            side: BorderSide(color: isOverdue ? Colors.red.withValues(alpha: 0.5) : AppColors.border),
                           ),
                           margin: const EdgeInsets.only(bottom: 12),
                           child: Padding(
@@ -421,10 +530,27 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                                     Expanded(
                                       child: Text(
                                         task.title,
-                                        style: const TextStyle(
-                                          color: AppColors.textPrimary,
+                                        style: TextStyle(
+                                          color: isOverdue ? Colors.red.shade300 : AppColors.textPrimary,
                                           fontSize: 15,
                                           fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      margin: const EdgeInsets.only(right: 6),
+                                      decoration: BoxDecoration(
+                                        color: priorityColor.withValues(alpha: 0.1),
+                                        border: Border.all(color: priorityColor.withValues(alpha: 0.3)),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(
+                                        task.priority.value.toUpperCase(),
+                                        style: TextStyle(
+                                          color: priorityColor,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
                                         ),
                                       ),
                                     ),
@@ -462,12 +588,29 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                                   ),
                                 ],
                                 const SizedBox(height: 8),
-                                Text(
-                                  'Created ${task.createdAt.toString().split(' ')[0]}',
-                                  style: const TextStyle(
-                                    color: AppColors.textTertiary,
-                                    fontSize: 11,
-                                  ),
+                                Row(
+                                  children: [
+                                    Text(
+                                      'Created ${task.createdAt.toString().split(' ')[0]}',
+                                      style: const TextStyle(
+                                        color: AppColors.textTertiary,
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                    if (task.dueDate != null) ...[
+                                      const Spacer(),
+                                      Icon(Icons.calendar_today, size: 12, color: isOverdue ? Colors.red.shade300 : AppColors.textTertiary),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Due: ${task.dueDate!.toString().split(' ')[0]}',
+                                        style: TextStyle(
+                                          color: isOverdue ? Colors.red.shade300 : AppColors.textTertiary,
+                                          fontSize: 11,
+                                          fontWeight: isOverdue ? FontWeight.bold : FontWeight.normal,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
                                 ),
                               ],
                             ),

@@ -50,6 +50,19 @@ class ProjectProvider extends ChangeNotifier {
 
     try {
       _projectAnalytics = await _apiService.getProjectAnalytics(id);
+
+      // Sync the updated completion percentage back to the main list
+      final index = _projects.indexWhere((p) => p.id == id);
+      if (index != -1 && _projectAnalytics != null) {
+        _projects[index] = _projects[index].copyWith(
+          completionPercentage: _projectAnalytics!.completionPercentage,
+        );
+      }
+      if (_selectedProject?.id == id && _projectAnalytics != null) {
+        _selectedProject = _selectedProject!.copyWith(
+          completionPercentage: _projectAnalytics!.completionPercentage,
+        );
+      }
     } catch (e) {
       debugPrint('Failed to fetch analytics: $e');
       _projectAnalytics = null;

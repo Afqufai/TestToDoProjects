@@ -13,6 +13,12 @@ public class TaskDto
 
     public string Status { get; set; } = string.Empty;
 
+    public DateTime? DueDate { get; set; }
+
+    public string Priority { get; set; } = string.Empty;
+
+    public Guid? AssigneeId { get; set; }
+
     public Guid ProjectId { get; set; }
 
     public DateTime CreatedAt { get; set; }

@@ -18,6 +18,14 @@ public class CreateUpdateTaskDto
         ErrorMessage = "Status must be 'Todo', 'InProgress', or 'Done'.")]
     public string Status { get; set; } = "Todo";
 
+    public DateTime? DueDate { get; set; }
+
+    [RegularExpression("^(Low|Medium|High)$",
+        ErrorMessage = "Priority must be 'Low', 'Medium', or 'High'.")]
+    public string Priority { get; set; } = "Medium";
+
+    public Guid? AssigneeId { get; set; }
+
     [Required]
     public Guid ProjectId { get; set; }
 }

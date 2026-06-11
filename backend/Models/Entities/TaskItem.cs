@@ -1,4 +1,5 @@
 using TaskStatus = WorkspaceTracker.Api.Models.Enums.TaskStatus;
+using WorkspaceTracker.Api.Models.Enums;
 
 namespace WorkspaceTracker.Api.Models.Entities;
 
@@ -14,6 +15,15 @@ public class TaskItem
     public string Description { get; set; } = string.Empty;
 
     public TaskStatus Status { get; set; } = TaskStatus.Todo;
+
+    public DateTime? DueDate { get; set; }
+
+    public TaskPriority Priority { get; set; } = TaskPriority.Medium;
+
+    public Guid? AssigneeId { get; set; }
+
+    /// <summary>Navigation property for the assignee.</summary>
+    public User? Assignee { get; set; }
 
     public Guid ProjectId { get; set; }
 

@@ -24,7 +24,18 @@ public class ProjectRepository : IProjectRepository
     public async Task<IEnumerable<Project>> GetAllAsync()
     {
         using var connection = _connectionFactory.CreateConnection();
-        const string sql = """SELECT * FROM "Projects" ORDER BY "CreatedAt" DESC""";
+        const string sql = """
+            SELECT 
+                p.*,
+                CASE 
+                    WHEN COUNT(t."Id") = 0 THEN 0.0 
+                    ELSE ROUND((COUNT(CASE WHEN t."Status" = 'Done' THEN 1 END) * 100.0) / COUNT(t."Id"), 2)::FLOAT
+                END AS "CompletionPercentage"
+            FROM "Projects" p
+            LEFT JOIN "Tasks" t ON p."Id" = t."ProjectId"
+            GROUP BY p."Id"
+            ORDER BY p."CreatedAt" DESC
+            """;
         return await connection.QueryAsync<Project>(sql);
     }
 

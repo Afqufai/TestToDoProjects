@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace WorkspaceTracker.Api.Models.Entities;
 
 /// <summary>
@@ -12,6 +14,9 @@ public class Project
     public string Description { get; set; } = string.Empty;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    [NotMapped]
+    public double CompletionPercentage { get; set; }
 
     /// <summary>Navigation property for the tasks belonging to this project.</summary>
     public ICollection<TaskItem> Tasks { get; set; } = new List<TaskItem>();

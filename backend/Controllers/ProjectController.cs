@@ -98,7 +98,8 @@ public class ProjectController : ControllerBase
         Id = project.Id,
         Name = project.Name,
         Description = project.Description,
-        CreatedAt = project.CreatedAt
+        CreatedAt = project.CreatedAt,
+        CompletionPercentage = project.CompletionPercentage
     };
 
     /// <summary>Retrieves health and task analytics for a specific project.</summary>

@@ -259,6 +259,8 @@ class ApiService {
     required String description,
     required String status,
     required String projectId,
+    DateTime? dueDate,
+    String? priority,
   }) async {
     try {
       final response = await _dio.post(
@@ -268,6 +270,8 @@ class ApiService {
           'description': description,
           'status': status,
           'projectId': projectId,
+          if (dueDate != null) 'dueDate': dueDate.toIso8601String(),
+          if (priority != null) 'priority': priority,
         },
       );
 
@@ -287,6 +291,8 @@ class ApiService {
     required String description,
     required String status,
     required String projectId,
+    DateTime? dueDate,
+    String? priority,
   }) async {
     try {
       final response = await _dio.put(
@@ -296,6 +302,8 @@ class ApiService {
           'description': description,
           'status': status,
           'projectId': projectId,
+          if (dueDate != null) 'dueDate': dueDate.toIso8601String(),
+          if (priority != null) 'priority': priority,
         },
       );
 

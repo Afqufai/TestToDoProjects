@@ -18,6 +18,24 @@ enum TaskStatus {
   }
 }
 
+/// Represents the priority of a task.
+enum TaskPriority {
+  low('Low'),
+  medium('Medium'),
+  high('High');
+
+  final String value;
+
+  const TaskPriority(this.value);
+
+  static TaskPriority fromString(String value) {
+    return TaskPriority.values.firstWhere(
+      (priority) => priority.value == value,
+      orElse: () => TaskPriority.medium,
+    );
+  }
+}
+
 /// Data model representing a task within a project.
 class TaskItem {
   final String id;
@@ -26,6 +44,9 @@ class TaskItem {
   final TaskStatus status;
   final String projectId;
   final DateTime createdAt;
+  final DateTime? dueDate;
+  final TaskPriority priority;
+  final String? assigneeId;
 
   const TaskItem({
     required this.id,
@@ -34,6 +55,9 @@ class TaskItem {
     required this.status,
     required this.projectId,
     required this.createdAt,
+    this.dueDate,
+    this.priority = TaskPriority.medium,
+    this.assigneeId,
   });
 
   /// Deserialises a [TaskItem] from a JSON map returned by the API.
@@ -47,6 +71,9 @@ class TaskItem {
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'] as String)
           : DateTime.now(),
+      dueDate: json['dueDate'] != null ? DateTime.parse(json['dueDate'] as String) : null,
+      priority: TaskPriority.fromString(json['priority'] as String? ?? 'Medium'),
+      assigneeId: json['assigneeId'] as String?,
     );
   }
 
@@ -58,6 +85,9 @@ class TaskItem {
         'status': status.value,
         'projectId': projectId,
         'createdAt': createdAt.toIso8601String(),
+        'dueDate': dueDate?.toIso8601String(),
+        'priority': priority.value,
+        'assigneeId': assigneeId,
       };
 
   /// Returns a copy of this task with the given fields replaced.
@@ -68,6 +98,9 @@ class TaskItem {
     TaskStatus? status,
     String? projectId,
     DateTime? createdAt,
+    DateTime? dueDate,
+    TaskPriority? priority,
+    String? assigneeId,
   }) {
     return TaskItem(
       id: id ?? this.id,
@@ -76,6 +109,9 @@ class TaskItem {
       status: status ?? this.status,
       projectId: projectId ?? this.projectId,
       createdAt: createdAt ?? this.createdAt,
+      dueDate: dueDate ?? this.dueDate,
+      priority: priority ?? this.priority,
+      assigneeId: assigneeId ?? this.assigneeId,
     );
   }
 }

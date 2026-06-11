@@ -4,12 +4,14 @@ class Project {
   final String name;
   final String description;
   final DateTime createdAt;
+  final double completionPercentage;
 
   const Project({
     required this.id,
     required this.name,
     required this.description,
     required this.createdAt,
+    this.completionPercentage = 0.0,
   });
 
   /// Deserialises a [Project] from a JSON map returned by the API.
@@ -21,6 +23,7 @@ class Project {
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'] as String)
           : DateTime.now(),
+      completionPercentage: (json['completionPercentage'] as num?)?.toDouble() ?? 0.0,
     );
   }
 
@@ -30,6 +33,7 @@ class Project {
         'name': name,
         'description': description,
         'createdAt': createdAt.toIso8601String(),
+        'completionPercentage': completionPercentage,
       };
 
   /// Returns a copy of this project with the given fields replaced.
@@ -38,12 +42,14 @@ class Project {
     String? name,
     String? description,
     DateTime? createdAt,
+    double? completionPercentage,
   }) {
     return Project(
       id: id ?? this.id,
       name: name ?? this.name,
       description: description ?? this.description,
       createdAt: createdAt ?? this.createdAt,
+      completionPercentage: completionPercentage ?? this.completionPercentage,
     );
   }
 }

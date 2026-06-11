@@ -71,10 +71,20 @@ public class AppDbContext : DbContext
                 .HasMaxLength(20)
                 .IsRequired();
 
+            entity.Property(t => t.Priority)
+                .HasConversion<string>()
+                .HasMaxLength(20)
+                .IsRequired();
+
             entity.HasOne(t => t.Project)
                 .WithMany(p => p.Tasks)
                 .HasForeignKey(t => t.ProjectId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(t => t.Assignee)
+                .WithMany()
+                .HasForeignKey(t => t.AssigneeId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
     }
 }

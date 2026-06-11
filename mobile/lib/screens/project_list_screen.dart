@@ -245,11 +245,34 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 12),
-                        Text(
-                          'Created ${project.createdAt.toString().split(' ')[0]}',
-                          style: const TextStyle(
-                            color: AppColors.textTertiary,
-                            fontSize: 12,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Created ${project.createdAt.toString().split(' ')[0]}',
+                              style: const TextStyle(
+                                color: AppColors.textTertiary,
+                                fontSize: 12,
+                              ),
+                            ),
+                            Text(
+                              '${project.completionPercentage.toStringAsFixed(1)}%',
+                              style: const TextStyle(
+                                color: AppColors.textPrimary,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: project.completionPercentage / 100,
+                            backgroundColor: AppColors.border,
+                            valueColor: const AlwaysStoppedAnimation<Color>(Colors.indigoAccent),
+                            minHeight: 4,
                           ),
                         ),
                       ],

@@ -44,6 +44,8 @@ class TaskProvider extends ChangeNotifier {
     required String title,
     required String description,
     required String projectId,
+    DateTime? dueDate,
+    TaskPriority? priority,
   }) async {
     return _guardWithResult(() async {
       final newTask = await _apiService.createTask(
@@ -51,6 +53,8 @@ class TaskProvider extends ChangeNotifier {
         description: description,
         status: TaskStatus.todo.value,
         projectId: projectId,
+        dueDate: dueDate,
+        priority: priority?.value,
       );
       _tasks.insert(0, newTask);
     });
@@ -63,6 +67,8 @@ class TaskProvider extends ChangeNotifier {
     required String description,
     required TaskStatus status,
     required String projectId,
+    DateTime? dueDate,
+    TaskPriority? priority,
   }) async {
     return _guardWithResult(() async {
       await _apiService.updateTask(
@@ -71,6 +77,8 @@ class TaskProvider extends ChangeNotifier {
         description: description,
         status: status.value,
         projectId: projectId,
+        dueDate: dueDate,
+        priority: priority?.value,
       );
 
       final index = _tasks.indexWhere((t) => t.id == id);
@@ -80,6 +88,8 @@ class TaskProvider extends ChangeNotifier {
           description: description,
           status: status,
           projectId: projectId,
+          dueDate: dueDate,
+          priority: priority ?? TaskPriority.medium,
         );
       }
     });
@@ -102,6 +112,8 @@ class TaskProvider extends ChangeNotifier {
       description: task.description,
       status: newStatus,
       projectId: task.projectId,
+      dueDate: task.dueDate,
+      priority: task.priority,
     );
   }
 
