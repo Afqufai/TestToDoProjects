@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:workspace_tracker/models/project_model.dart';
+import 'package:workspace_tracker/models/project_analytics_model.dart';
 import 'package:workspace_tracker/services/api_service.dart';
 
 /// Manages the list of projects and the currently selected project.
@@ -8,7 +9,10 @@ class ProjectProvider extends ChangeNotifier {
 
   List<Project> _projects = [];
   Project? _selectedProject;
+  ProjectAnalytics? _projectAnalytics;
+  
   bool _isLoading = false;
+  bool _isAnalyticsLoading = false;
   String? _errorMessage;
 
   ProjectProvider({required ApiService apiService}) : _apiService = apiService;
@@ -17,7 +21,10 @@ class ProjectProvider extends ChangeNotifier {
 
   List<Project> get projects => List.unmodifiable(_projects);
   Project? get selectedProject => _selectedProject;
+  ProjectAnalytics? get projectAnalytics => _projectAnalytics;
+  
   bool get isLoading => _isLoading;
+  bool get isAnalyticsLoading => _isAnalyticsLoading;
   String? get errorMessage => _errorMessage;
 
   // ---- Public API ----
@@ -34,6 +41,22 @@ class ProjectProvider extends ChangeNotifier {
     await _guard(() async {
       _selectedProject = await _apiService.getProjectById(id);
     });
+  }
+
+  /// Fetches the analytics for a specific project.
+  Future<void> fetchProjectAnalytics(String id) async {
+    _isAnalyticsLoading = true;
+    notifyListeners();
+
+    try {
+      _projectAnalytics = await _apiService.getProjectAnalytics(id);
+    } catch (e) {
+      debugPrint('Failed to fetch analytics: $e');
+      _projectAnalytics = null;
+    } finally {
+      _isAnalyticsLoading = false;
+      notifyListeners();
+    }
   }
 
   /// Creates a new project and prepends it to the local list.

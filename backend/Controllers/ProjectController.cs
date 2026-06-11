@@ -100,4 +100,18 @@ public class ProjectController : ControllerBase
         Description = project.Description,
         CreatedAt = project.CreatedAt
     };
+
+    /// <summary>Retrieves health and task analytics for a specific project.</summary>
+    [HttpGet("{projectId:guid}/analytics")]
+    [ProducesResponseType(typeof(ProjectAnalyticsDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ProjectAnalyticsDto>> GetProjectAnalytics(Guid projectId)
+    {
+        var project = await _projectRepository.GetByIdAsync(projectId);
+        if (project is null)
+            return NotFound(new { Message = $"Project with ID {projectId} not found." });
+
+        var analytics = await _projectRepository.GetProjectAnalyticsAsync(projectId);
+        return Ok(analytics);
+    }
 }

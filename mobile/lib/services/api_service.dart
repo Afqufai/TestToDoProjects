@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workspace_tracker/models/auth_response_model.dart';
 import 'package:workspace_tracker/models/project_model.dart';
 import 'package:workspace_tracker/models/task_model.dart';
+import 'package:workspace_tracker/models/project_analytics_model.dart';
 
 /// Centralised HTTP client for communicating with the Workspace Tracker API.
 ///
@@ -145,6 +146,20 @@ class ApiService {
         return Project.fromJson(response.data as Map<String, dynamic>);
       }
       throw Exception(_extractMessage(response.data) ?? 'Failed to fetch project.');
+    } on DioException catch (e) {
+      throw Exception(_getNetworkErrorMessage(e));
+    }
+  }
+
+  /// Fetches health and progress analytics for a specific project.
+  Future<ProjectAnalytics> getProjectAnalytics(String id) async {
+    try {
+      final response = await _dio.get('/api/projects/$id/analytics');
+
+      if (response.statusCode == 200) {
+        return ProjectAnalytics.fromJson(response.data as Map<String, dynamic>);
+      }
+      throw Exception(_extractMessage(response.data) ?? 'Failed to fetch analytics.');
     } on DioException catch (e) {
       throw Exception(_getNetworkErrorMessage(e));
     }

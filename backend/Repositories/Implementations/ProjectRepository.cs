@@ -59,4 +59,27 @@ public class ProjectRepository : IProjectRepository
         _context.Projects.Remove(project);
         await _context.SaveChangesAsync();
     }
+
+    /// <inheritdoc />
+    public async Task<WorkspaceTracker.Api.Models.DTOs.Project.ProjectAnalyticsDto> GetProjectAnalyticsAsync(Guid projectId)
+    {
+        using var connection = _connectionFactory.CreateConnection();
+        
+        const string sql = """
+            SELECT 
+                COUNT(*)::INT AS "TotalTasks",
+                COUNT(CASE WHEN "Status" = 'Done' THEN 1 END)::INT AS "CompletedTasks",
+                CASE 
+                    WHEN COUNT(*) = 0 THEN 0.0 
+                    ELSE ROUND((COUNT(CASE WHEN "Status" = 'Done' THEN 1 END) * 100.0) / COUNT(*), 2)::FLOAT
+                END AS "CompletionPercentage",
+                COUNT(CASE WHEN "Status" IN ('Todo', 'InProgress') AND "CreatedAt" < NOW() - INTERVAL '7 days' THEN 1 END)::INT AS "BottleneckTasks"
+            FROM "Tasks"
+            WHERE "ProjectId" = @ProjectId
+            """;
+
+        var result = await connection.QuerySingleOrDefaultAsync<WorkspaceTracker.Api.Models.DTOs.Project.ProjectAnalyticsDto>(sql, new { ProjectId = projectId });
+        
+        return result ?? new WorkspaceTracker.Api.Models.DTOs.Project.ProjectAnalyticsDto();
+    }
 }

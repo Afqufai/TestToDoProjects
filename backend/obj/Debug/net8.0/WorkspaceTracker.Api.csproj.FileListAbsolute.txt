@@ -245,3 +245,4 @@
 /home/ayakayukina/Projects/College/WebTestMagang/backend/obj/Debug/net8.0/WorkspaceTracker.Api.pdb
 /home/ayakayukina/Projects/College/WebTestMagang/backend/obj/Debug/net8.0/WorkspaceTracker.Api.genruntimeconfig.cache
 /home/ayakayukina/Projects/College/WebTestMagang/backend/obj/Debug/net8.0/ref/WorkspaceTracker.Api.dll
+/home/ayakayukina/Projects/College/WebTestMagang/backend/obj/Debug/net8.0/WorkspaceTracker.Api.sourcelink.json

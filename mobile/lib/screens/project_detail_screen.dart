@@ -21,6 +21,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ProjectProvider>().fetchProjectById(widget.projectId);
+      context.read<ProjectProvider>().fetchProjectAnalytics(widget.projectId);
       context.read<TaskProvider>().fetchProjectTasks(widget.projectId);
     });
   }
@@ -83,6 +84,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
               if (!context.mounted) return;
               Navigator.pop(context);
               if (success) {
+                context.read<ProjectProvider>().fetchProjectAnalytics(widget.projectId);
                 showAppSnackBar(
                   context,
                   message: 'Task created successfully',
@@ -179,6 +181,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                 if (!context.mounted) return;
                 Navigator.pop(context);
                 if (success) {
+                  context.read<ProjectProvider>().fetchProjectAnalytics(widget.projectId);
                   showAppSnackBar(
                     context,
                     message: 'Task deleted successfully',
@@ -218,6 +221,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                 if (!context.mounted) return;
                 Navigator.pop(context);
                 if (success) {
+                  context.read<ProjectProvider>().fetchProjectAnalytics(widget.projectId);
                   showAppSnackBar(
                     context,
                     message: 'Task updated successfully',
@@ -332,6 +336,11 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                     ),
                   ),
                 ),
+
+                const SizedBox(height: 24),
+
+                // Project Analytics Dashboard
+                _buildAnalyticsWidget(projectProvider),
 
                 const SizedBox(height: 24),
 
@@ -471,6 +480,137 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildAnalyticsWidget(ProjectProvider provider) {
+    if (provider.isAnalyticsLoading) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 24),
+        child: Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation(Colors.indigo),
+          ),
+        ),
+      );
+    }
+
+    final analytics = provider.projectAnalytics;
+    if (analytics == null) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Project Health',
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 12),
+        // Progress Bar Card
+        Card(
+          color: AppColors.surface,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: const BorderSide(color: AppColors.border),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Completion Progress',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Text(
+                      '${analytics.completionPercentage.toStringAsFixed(1)}%',
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: LinearProgressIndicator(
+                    value: analytics.totalTasks == 0 ? 0 : analytics.completionPercentage / 100,
+                    backgroundColor: AppColors.border,
+                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.indigoAccent),
+                    minHeight: 8,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        // Stats Row
+        Row(
+          children: [
+            _buildStatCard('Total Tasks', analytics.totalTasks.toString(), Colors.indigoAccent),
+            const SizedBox(width: 12),
+            _buildStatCard('Completed', analytics.completedTasks.toString(), Colors.green),
+            const SizedBox(width: 12),
+            _buildStatCard('Bottlenecks', analytics.bottleneckTasks.toString(), Colors.orange),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatCard(String title, String value, Color color) {
+    return Expanded(
+      child: Card(
+        color: AppColors.surface,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: const BorderSide(color: AppColors.border),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                value,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
