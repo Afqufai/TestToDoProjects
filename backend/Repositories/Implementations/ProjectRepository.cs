@@ -1,5 +1,6 @@
 using Dapper;
 using WorkspaceTracker.Api.Data;
+using WorkspaceTracker.Api.Models.DTOs.Project;
 using WorkspaceTracker.Api.Models.Entities;
 using WorkspaceTracker.Api.Repositories.Interfaces;
 
@@ -72,7 +73,7 @@ public class ProjectRepository : IProjectRepository
     }
 
     /// <inheritdoc />
-    public async Task<WorkspaceTracker.Api.Models.DTOs.Project.ProjectAnalyticsDto> GetProjectAnalyticsAsync(Guid projectId)
+    public async Task<ProjectAnalyticsDto> GetProjectAnalyticsAsync(Guid projectId)
     {
         using var connection = _connectionFactory.CreateConnection();
         
@@ -89,8 +90,8 @@ public class ProjectRepository : IProjectRepository
             WHERE "ProjectId" = @ProjectId
             """;
 
-        var result = await connection.QuerySingleOrDefaultAsync<WorkspaceTracker.Api.Models.DTOs.Project.ProjectAnalyticsDto>(sql, new { ProjectId = projectId });
+        var result = await connection.QuerySingleOrDefaultAsync<ProjectAnalyticsDto>(sql, new { ProjectId = projectId });
         
-        return result ?? new WorkspaceTracker.Api.Models.DTOs.Project.ProjectAnalyticsDto();
+        return result ?? new ProjectAnalyticsDto();
     }
 }

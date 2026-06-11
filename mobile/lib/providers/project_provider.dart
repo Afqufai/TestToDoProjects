@@ -64,7 +64,7 @@ class ProjectProvider extends ChangeNotifier {
         );
       }
     } catch (e) {
-      debugPrint('Failed to fetch analytics: $e');
+      // Analytics fetch failed — degrade gracefully.
       _projectAnalytics = null;
     } finally {
       _isAnalyticsLoading = false;

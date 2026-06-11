@@ -15,6 +15,10 @@ public class Project
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+    /// <summary>
+    /// Dynamically computed completion percentage based on related task statuses.
+    /// Not stored in the database — populated by Dapper queries at read time.
+    /// </summary>
     [NotMapped]
     public double CompletionPercentage { get; set; }
 

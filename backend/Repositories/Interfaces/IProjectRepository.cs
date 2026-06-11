@@ -1,3 +1,4 @@
+using WorkspaceTracker.Api.Models.DTOs.Project;
 using WorkspaceTracker.Api.Models.Entities;
 
 namespace WorkspaceTracker.Api.Repositories.Interfaces;
@@ -12,5 +13,5 @@ public interface IProjectRepository
     Task AddAsync(Project project);
     Task UpdateAsync(Project project);
     Task DeleteAsync(Guid id);
-    Task<WorkspaceTracker.Api.Models.DTOs.Project.ProjectAnalyticsDto> GetProjectAnalyticsAsync(Guid projectId);
+    Task<ProjectAnalyticsDto> GetProjectAnalyticsAsync(Guid projectId);
 }
